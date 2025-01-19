@@ -1,0 +1,44 @@
+﻿<Window x:Class="HoloStreamProject.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="HoloStream Viewer" Height="600" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="1*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="1*" />
+        </Grid.RowDefinitions>
+
+        <!-- Stream 1 -->
+        <Grid Grid.Row="0" Grid.Column="0">
+            <Image x:Name="Stream1Background" Source="Images/korone.png" Stretch="UniformToFill" Visibility="Visible" />
+            <wv2:WebView2 x:Name="Stream1" Visibility="Hidden" />
+            <TextBlock x:Name="Stream1Status" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="24" Visibility="Hidden">OFFLINE</TextBlock>
+        </Grid>
+
+        <!-- Stream 2 -->
+        <Grid Grid.Row="0" Grid.Column="1">
+            <Image x:Name="Stream2Background" Source="Images/pekora.png" Stretch="UniformToFill" Visibility="Visible" />
+            <wv2:WebView2 x:Name="Stream2" Visibility="Hidden" />
+            <TextBlock x:Name="Stream2Status" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="24" Visibility="Hidden">OFFLINE</TextBlock>
+        </Grid>
+
+        <!-- Stream 3 -->
+        <Grid Grid.Row="1" Grid.Column="0">
+            <Image x:Name="Stream3Background" Source="Images/marine.png" Stretch="UniformToFill" Visibility="Visible" />
+            <wv2:WebView2 x:Name="Stream3" Visibility="Hidden" />
+            <TextBlock x:Name="Stream3Status" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="24" Visibility="Hidden">OFFLINE</TextBlock>
+        </Grid>
+
+        <!-- Stream 4 -->
+        <Grid Grid.Row="1" Grid.Column="1">
+            <Image x:Name="Stream4Background" Source="Images/fuwamoco.png" Stretch="UniformToFill" Visibility="Visible" />
+            <wv2:WebView2 x:Name="Stream4" Visibility="Hidden" />
+            <TextBlock x:Name="Stream4Status" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="24" Visibility="Hidden">OFFLINE</TextBlock>
+        </Grid>
+    </Grid>
+</Window>
