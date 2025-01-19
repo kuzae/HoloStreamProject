@@ -33,6 +33,11 @@ namespace HoloStreamProject
             Task.Run(() => SubscribeToNotifications());
             CheckAndLoadStreams();
         }
+        private async void Stream1ReloadButton_Click(object sender, RoutedEventArgs e) => await ReloadStreamAsync(0);
+        private async void Stream2ReloadButton_Click(object sender, RoutedEventArgs e) => await ReloadStreamAsync(1);
+        private async void Stream3ReloadButton_Click(object sender, RoutedEventArgs e) => await ReloadStreamAsync(2);
+        private async void Stream4ReloadButton_Click(object sender, RoutedEventArgs e) => await ReloadStreamAsync(3);
+
         private void InitializeStreamState()
         {
             for (int i = 0; i < 4; i++)
@@ -103,6 +108,60 @@ namespace HoloStreamProject
                 Console.WriteLine($"Error processing notification: {ex.Message}");
             }
         }
+        private async Task ReloadStreamAsync(int streamIndex)
+        {
+            string apiKey = Environment.GetEnvironmentVariable("YOUTUBE_API_KEY");
+            if (string.IsNullOrEmpty(apiKey))
+            {
+                MessageBox.Show("YouTube API key is missing. Please set it in the environment variables.", "Configuration Error");
+                return;
+            }
+
+            try
+            {
+                string channelId = ChannelIds[streamIndex];
+
+                // Fetch videos from the channel
+                var youtubeService = new YouTubeService(new BaseClientService.Initializer
+                {
+                    ApiKey = apiKey
+                });
+
+                var searchRequest = youtubeService.Search.List("snippet");
+                searchRequest.ChannelId = channelId;
+                searchRequest.Type = "video";
+                searchRequest.MaxResults = 50; // Fetch a batch of 10 videos
+                searchRequest.Order = SearchResource.ListRequest.OrderEnum.Date; // Latest videos
+
+                var searchResponse = await searchRequest.ExecuteAsync();
+
+                // Select a random video
+                var random = new Random();
+                var videos = searchResponse.Items.Where(item => item.Id.Kind == "youtube#video").ToList();
+                if (videos.Count == 0)
+                {
+                    MessageBox.Show("No videos found for this channel.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                var randomVideo = videos[random.Next(videos.Count)];
+                string videoId = randomVideo.Id.VideoId;
+                string url = $"https://cdpn.io/pen/debug/oNPzxKo?v={videoId}&autoplay=0&mute=1";
+
+                // Update the WebView for the selected stream
+                SetStreamSource(streamIndex, url);
+
+                // Hide the "OFFLINE" message and reload button
+                UpdateStreamUI(streamIndex, url, hasLiveStream: true);
+
+                Console.WriteLine($"Stream {streamIndex + 1} updated to random video: {videoId}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error reloading stream: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private async Task CheckAndLoadStreams()
         {
             string apiKey = Environment.GetEnvironmentVariable("YOUTUBE_API_KEY");
@@ -172,55 +231,27 @@ namespace HoloStreamProject
             {
                 case 0:
                     System.Diagnostics.Debug.WriteLine("Korone");
-                    if (hasLiveStream)
-                    {
-                        Stream1.Source = new Uri(url);
-                        Stream1Background.Visibility = Visibility.Hidden;
-                        Stream1.Visibility = Visibility.Visible;
-                    }
-                    Stream1.Visibility = Visibility.Hidden;
-                    Stream1Background.Visibility = Visibility.Visible;
-                    Stream1Status.Visibility = Visibility.Visible;
-                    Stream1Status.Text = "OFFLINE";
+                    Stream1.Source = new Uri(url);
+                    Stream1Background.Visibility = Visibility.Hidden;
+                    Stream1.Visibility = Visibility.Visible;
                     break;
                 case 1:
                     System.Diagnostics.Debug.WriteLine("Pekora");
-                    if (hasLiveStream)
-                    {
-                        Stream2.Source = new Uri(url);
-                        Stream2Background.Visibility = Visibility.Hidden;
-                        Stream2.Visibility = Visibility.Visible;
-                    }
-                    Stream2.Visibility = Visibility.Hidden;
-                    Stream2Background.Visibility = Visibility.Visible;
-                    Stream2Status.Visibility = Visibility.Visible;
-                    Stream2Status.Text = "OFFLINE";
+                    Stream2.Source = new Uri(url);
+                    Stream2Background.Visibility = Visibility.Hidden;
+                    Stream2.Visibility = Visibility.Visible;
                     break;
                 case 2:
                     System.Diagnostics.Debug.WriteLine("Senchou");
-                    if (hasLiveStream)
-                    {
-                        Stream3.Source = new Uri(url);
-                        Stream3Background.Visibility = Visibility.Hidden;
-                        Stream3.Visibility = Visibility.Visible;
-                    }
-                    Stream3.Visibility = Visibility.Hidden;
-                    Stream3Background.Visibility = Visibility.Visible;
-                    Stream3Status.Visibility = Visibility.Visible;
-                    Stream3Status.Text = "OFFLINE";
+                    Stream3.Source = new Uri(url);
+                    Stream3Background.Visibility = Visibility.Hidden;
+                    Stream3.Visibility = Visibility.Visible;
                     break;
                 case 3:
                     System.Diagnostics.Debug.WriteLine("Fuwamoco");
-                    if (hasLiveStream)
-                    {
-                        Stream4.Source = new Uri(url);
-                        Stream4Background.Visibility = Visibility.Hidden;
-                        Stream4.Visibility = Visibility.Visible;
-                    }
-                    Stream4.Visibility = Visibility.Hidden;
-                    Stream4Background.Visibility = Visibility.Visible;
-                    Stream4Status.Visibility = Visibility.Visible;
-                    Stream4Status.Text = "OFFLINE";
+                    Stream4.Source = new Uri(url);
+                    Stream4Background.Visibility = Visibility.Hidden;
+                    Stream4.Visibility = Visibility.Visible;
                     break;
             }
         }
