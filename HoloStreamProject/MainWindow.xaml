@@ -18,7 +18,7 @@
             <Image x:Name="Stream1Background" Source="Images/korone.png" Stretch="UniformToFill" Visibility="Visible" />
             <wv2:WebView2 x:Name="Stream1" Visibility="Hidden" />
             <TextBlock x:Name="Stream1Status" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="24" Visibility="Hidden">OFFLINE</TextBlock>
-            <Button x:Name="Stream1ReloadButton" Content="Reload" Visibility="Visible" Click="Stream1ReloadButton_Click" Opacity="0.5" />
+            <Button x:Name="Stream1ReloadButton" Content="Offline" Visibility="Visible" Click="Stream1ReloadButton_Click" Opacity="0.5" />
         </Grid>
 
         <!-- Stream 2 -->
@@ -26,7 +26,7 @@
             <Image x:Name="Stream2Background" Source="Images/pekora.png" Stretch="UniformToFill" Visibility="Visible" />
             <wv2:WebView2 x:Name="Stream2" Visibility="Hidden" />
             <TextBlock x:Name="Stream2Status" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="24" Visibility="Hidden">OFFLINE</TextBlock>
-            <Button x:Name="Stream2ReloadButton" Content="Reload" Visibility="Visible" Click="Stream2ReloadButton_Click" Opacity="0.5" />
+            <Button x:Name="Stream2ReloadButton" Content="Offline" Visibility="Visible" Click="Stream2ReloadButton_Click" Opacity="0.5" />
         </Grid>
 
         <!-- Stream 3 -->
@@ -34,7 +34,7 @@
             <Image x:Name="Stream3Background" Source="Images/marine.png" Stretch="UniformToFill" Visibility="Visible" />
             <wv2:WebView2 x:Name="Stream3" Visibility="Hidden" />
             <TextBlock x:Name="Stream3Status" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="24" Visibility="Hidden">OFFLINE</TextBlock>
-            <Button x:Name="Stream3ReloadButton" Content="Reload" Visibility="Visible" Click="Stream3ReloadButton_Click" Opacity="0.5" />
+            <Button x:Name="Stream3ReloadButton" Content="Offline" Visibility="Visible" Click="Stream3ReloadButton_Click" Opacity="0.5" />
         </Grid>
 
         <!-- Stream 4 -->
@@ -42,7 +42,7 @@
             <Image x:Name="Stream4Background" Source="Images/fuwamoco.png" Stretch="UniformToFill" Visibility="Visible" />
             <wv2:WebView2 x:Name="Stream4" Visibility="Hidden" />
             <TextBlock x:Name="Stream4Status" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="24" Visibility="Hidden">OFFLINE</TextBlock>
-            <Button x:Name="Stream4ReloadButton" Content="Reload" Visibility="Visible" Click="Stream4ReloadButton_Click" Opacity="0.5" />
+            <Button x:Name="Stream4ReloadButton" Content="Offline" Visibility="Visible" Click="Stream4ReloadButton_Click" Opacity="0.5" />
         </Grid>
     </Grid>
 </Window>
