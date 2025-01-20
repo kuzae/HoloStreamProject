@@ -17,8 +17,10 @@
 
   <ItemGroup>
     <PackageReference Include="Google.Apis.YouTube.v3" Version="1.68.0.3653" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.72" />
     <PackageReference Include="Microsoft.AspNetCore.App" Version="2.2.8" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+    <PackageReference Include="PuppeteerSharp" Version="20.0.5" />
   </ItemGroup>
 
   <ItemGroup>
