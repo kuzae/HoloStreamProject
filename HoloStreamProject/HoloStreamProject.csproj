@@ -9,10 +9,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="channels.json" />
     <None Remove="Images\fuwamoco.png" />
     <None Remove="Images\korone.png" />
     <None Remove="Images\marine.png" />
     <None Remove="Images\pekora.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="channels.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

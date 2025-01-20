@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
@@ -16,32 +19,46 @@ namespace HoloStreamProject
     public partial class MainWindow : Window
     {
 
+        private List<Channel> _channels;
         private readonly Dictionary<int, string?> _currentStreamIds = new();
         private DispatcherTimer _refreshTimer;
         private readonly ScheduleScraper _scheduleScraper = new ScheduleScraper();
-        private static readonly string[] ChannelIds = {
-            "UChAnqc_AY5_I3Px5dig3X1Q", // Inugami Korone
-            "UC1DCedRgGHBdm81E1llLhOQ", // Usada Pekora
-            "UCCzUftO8KOVkV4wQG1vkUvg", // Houshou Marine
-            "UCt9H_RpQzhxzlyBxFqrdHqA"  // FUWAMOCO
-        };
-        private static readonly Dictionary<string, string> channelNames = new()
-        {
-                { "0", "戌神ころね" }, // Inugami Korone
-                { "1", "兎田ぺこら" }, // Usada Pekora
-                { "2", "宝鐘マリン" }, // Houshou Marine
-                { "3", "FUWAMOCO" } // Fuwamoco
-        };
 
         public MainWindow()
         {
             System.Diagnostics.Debug.WriteLine("Starting Holo Stream Project...");
-
             InitializeComponent();
+            LoadChannels();
             InitializeStreamState();
             Task.Run(() => YouTubeNotificationService.StartNotificationListenerAsync(OnNotificationReceived));
             Task.Run(() => SubscribeToNotifications());
             CheckAndLoadStreamsFromSchedule();
+        }
+        private void LoadChannels()
+        {
+            try
+            {
+                string jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "channels.json");
+                string json = File.ReadAllText(jsonPath);
+                var channelData = JsonSerializer.Deserialize<ChannelData>(json);
+
+                if (channelData?.Channels == null)
+                {
+                    throw new Exception("Failed to load channel data.");
+                }
+
+                _channels = channelData.Channels;
+
+                System.Diagnostics.Debug.WriteLine("Channels loaded:");
+                foreach (var channel in _channels)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Key: {channel.Key}, Name: {channel.Name}, ID: {channel.Id}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading channels: {ex.Message}");
+            }
         }
         private void InitializeStreamState()
         {
@@ -49,7 +66,6 @@ namespace HoloStreamProject
             {
                 _currentStreamIds[i] = null;
             }
-
         }
         private void UpdateStreamUI(int streamIndex, string url, bool hasLiveStream)
         {
@@ -161,9 +177,9 @@ namespace HoloStreamProject
         private async Task SubscribeToNotifications()
         {
             string callbackUrl = "https://ffc2-104-50-68-191.ngrok-free.app";
-            foreach (var channelId in ChannelIds)
+            foreach (var channel in _channels)
             {
-                await SubscribeToChannelNotificationsAsync(channelId, callbackUrl);
+                await SubscribeToChannelNotificationsAsync(channel.Id, callbackUrl);
             }
         }
         private async Task SubscribeToChannelNotificationsAsync(string channelId, string callbackUrl)
@@ -204,12 +220,17 @@ namespace HoloStreamProject
 
                 System.Diagnostics.Debug.WriteLine($"Notification received for channel {channelId}, video ID {videoId}");
 
-                int streamIndex = Array.IndexOf(ChannelIds, channelId);
+                // Find the matching channel and its index
+                var matchingChannel = _channels.FirstOrDefault(channel => channel.Id == channelId);
 
-                if (streamIndex >= 0)
+                if (matchingChannel != null && int.TryParse(matchingChannel.Key, out int streamIndex))
                 {
                     string url = $"https://cdpn.io/pen/debug/oNPzxKo?v={videoId}&autoplay=0&mute=1";
                     UpdateStreamUI(streamIndex, url, true);
+                }
+                else
+                {
+                    Console.WriteLine($"Channel ID {channelId} not found in the loaded channels.");
                 }
             }
             catch (Exception ex)
@@ -217,6 +238,7 @@ namespace HoloStreamProject
                 Console.WriteLine($"Error processing notification: {ex.Message}");
             }
         }
+
         private async Task ReloadStreamAsync(int streamIndex)
         {
             string scheduleUrl = "https://hololive.hololivepro.com/en/schedule/";
@@ -268,49 +290,58 @@ namespace HoloStreamProject
                 MessageBox.Show($"Error reloading stream: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
         private async Task CheckAndLoadStreamsFromSchedule()
         {
             string scheduleUrl = "https://hololive.hololivepro.com/en/schedule/";
 
             try
             {
+                // Scrape the schedule for live streams
                 var scheduleItems = await _scheduleScraper.ScrapeStreamsAsync(scheduleUrl);
+
+                // Log all scraped schedule items for debugging
                 foreach (var item in scheduleItems)
                 {
                     System.Diagnostics.Debug.WriteLine($"Start: {item.Start}, Name: {item.Name}, Text: {item.Text}, Link: {item.Link}, Live Status: {item.LiveStatus}");
                 }
-                foreach (var (key, channelName) in channelNames)
+
+                // Iterate through the channels list
+                foreach (var channel in _channels)
                 {
-                    var matchingItem = scheduleItems.FirstOrDefault(item => item.Name.Contains(channelName));
-
-                    if (matchingItem != null && matchingItem.LiveStatus == "Live")
+                    if (int.TryParse(channel.Key, out int streamIndex))
                     {
-                        string videoId = ExtractVideoId(matchingItem.Link);
-                        string url = !string.IsNullOrEmpty(videoId)
-                            ? $"https://cdpn.io/pen/debug/oNPzxKo?v={videoId}&autoplay=0&mute=1"
-                            : "about:blank";
+                        // Find a matching item from the schedule by channel name
+                        var matchingItem = scheduleItems.FirstOrDefault(item => item.Name.Contains(channel.Name));
 
-                        if (int.TryParse(key, out int streamIndex))
+                        if (matchingItem != null && matchingItem.LiveStatus == "Live")
                         {
+                            // Extract video ID and construct the video URL
+                            string videoId = ExtractVideoId(matchingItem.Link);
+                            string url = !string.IsNullOrEmpty(videoId)
+                                ? $"https://cdpn.io/pen/debug/oNPzxKo?v={videoId}&autoplay=0&mute=1"
+                                : "about:blank";
+
+                            // Update only if the video ID has changed
                             if (_currentStreamIds.TryGetValue(streamIndex, out string? currentVideoId) && currentVideoId == videoId)
                             {
                                 System.Diagnostics.Debug.WriteLine($"Stream {streamIndex} is still live with the same video ID. Skipping refresh.");
                                 continue;
                             }
 
+                            // Update the current stream and UI
                             _currentStreamIds[streamIndex] = videoId;
                             UpdateStreamUI(streamIndex, url, true);
+                        }
+                        else
+                        {
+                            // No matching live stream found, clear the UI for this channel
+                            _currentStreamIds[streamIndex] = null;
+                            UpdateStreamUI(streamIndex, "about:blank", false);
                         }
                     }
                     else
                     {
-                        // If no matching live stream is found, clear the UI for this channel
-                        if (int.TryParse(key, out int streamIndex))
-                        {
-                            _currentStreamIds[streamIndex] = null;
-                            UpdateStreamUI(streamIndex, "about:blank", false);
-                        }
+                        System.Diagnostics.Debug.WriteLine($"Invalid stream key for channel: {channel.Name}");
                     }
                 }
             }
@@ -342,7 +373,7 @@ namespace HoloStreamProject
 
 
 
-
+        /***
         private async Task CheckAndLoadStreams()
         {
             string apiKey = Environment.GetEnvironmentVariable("YOUTUBE_API_KEY");
@@ -399,5 +430,6 @@ namespace HoloStreamProject
                 MessageBox.Show($"Error loading streams: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        ***/
     }
 }
