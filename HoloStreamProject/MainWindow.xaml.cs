@@ -21,7 +21,6 @@ namespace HoloStreamProject
 
         private List<Channel> _channels;
         private readonly Dictionary<int, string?> _currentStreamIds = new();
-        private DispatcherTimer _refreshTimer;
         private readonly ScheduleScraper _scheduleScraper = new ScheduleScraper();
 
         public MainWindow()
@@ -33,6 +32,13 @@ namespace HoloStreamProject
             Task.Run(() => YouTubeNotificationService.StartNotificationListenerAsync(OnNotificationReceived));
             Task.Run(() => SubscribeToNotifications());
             CheckAndLoadStreamsFromSchedule();
+        }
+        private void InitializeStreamState()
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                _currentStreamIds[i] = null;
+            }
         }
         private void LoadChannels()
         {
@@ -57,14 +63,7 @@ namespace HoloStreamProject
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error loading channels: {ex.Message}");
-            }
-        }
-        private void InitializeStreamState()
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                _currentStreamIds[i] = null;
+                System.Diagnostics.Debug.WriteLine($"Error loading channels: {ex.Message}");
             }
         }
         private void UpdateStreamUI(int streamIndex, string url, bool hasLiveStream)
@@ -214,13 +213,12 @@ namespace HoloStreamProject
 
                 if (string.IsNullOrEmpty(videoId) || string.IsNullOrEmpty(channelId))
                 {
-                    Console.WriteLine("Invalid notification payload: missing video or channel ID.");
+                    System.Diagnostics.Debug.WriteLine("Invalid notification payload: missing video or channel ID.");
                     return;
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Notification received for channel {channelId}, video ID {videoId}");
 
-                // Find the matching channel and its index
                 var matchingChannel = _channels.FirstOrDefault(channel => channel.Id == channelId);
 
                 if (matchingChannel != null && int.TryParse(matchingChannel.Key, out int streamIndex))
@@ -230,12 +228,12 @@ namespace HoloStreamProject
                 }
                 else
                 {
-                    Console.WriteLine($"Channel ID {channelId} not found in the loaded channels.");
+                    System.Diagnostics.Debug.WriteLine($"Channel ID {channelId} not found in the loaded channels.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error processing notification: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error processing notification: {ex.Message}");
             }
         }
 
@@ -245,7 +243,6 @@ namespace HoloStreamProject
 
             try
             {
-                // Fetch live streams using the schedule scraper
                 var scheduleItems = await _scheduleScraper.ScrapeStreamsAsync(scheduleUrl);
 
                 if (scheduleItems == null || !scheduleItems.Any())
@@ -254,10 +251,7 @@ namespace HoloStreamProject
                     return;
                 }
 
-                // Get currently displayed streams to exclude
                 var displayedStreams = _currentStreamIds.Values.Where(id => !string.IsNullOrEmpty(id)).ToHashSet();
-
-                // Filter streams that match the channel names and are not currently displayed
                 var availableStreams = scheduleItems
                     .Where(item => item.LiveStatus == "Live" && !displayedStreams.Contains(ExtractVideoId(item.Link)))
                     .ToList();
@@ -268,22 +262,19 @@ namespace HoloStreamProject
                     return;
                 }
 
-                // Select a random available stream
                 var random = new Random();
                 var randomStream = availableStreams[random.Next(availableStreams.Count)];
 
-                // Extract video ID and prepare the URL
                 string videoId = ExtractVideoId(randomStream.Link);
                 string url = !string.IsNullOrEmpty(videoId)
                     ? $"https://cdpn.io/pen/debug/oNPzxKo?v={videoId}&autoplay=0&mute=1"
                     : "about:blank";
 
-                // Update the UI with the selected stream
                 _currentStreamIds[streamIndex] = videoId;
                 SetStreamSource(streamIndex, url);
                 UpdateStreamUI(streamIndex, url, hasLiveStream: true);
 
-                Console.WriteLine($"Stream {streamIndex + 1} updated to random live video: {videoId}");
+                System.Diagnostics.Debug.WriteLine($"Stream {streamIndex + 1} updated to random live video: {videoId}");
             }
             catch (Exception ex)
             {
@@ -296,45 +287,37 @@ namespace HoloStreamProject
 
             try
             {
-                // Scrape the schedule for live streams
                 var scheduleItems = await _scheduleScraper.ScrapeStreamsAsync(scheduleUrl);
 
-                // Log all scraped schedule items for debugging
                 foreach (var item in scheduleItems)
                 {
                     System.Diagnostics.Debug.WriteLine($"Start: {item.Start}, Name: {item.Name}, Text: {item.Text}, Link: {item.Link}, Live Status: {item.LiveStatus}");
                 }
 
-                // Iterate through the channels list
                 foreach (var channel in _channels)
                 {
                     if (int.TryParse(channel.Key, out int streamIndex))
                     {
-                        // Find a matching item from the schedule by channel name
                         var matchingItem = scheduleItems.FirstOrDefault(item => item.Name.Contains(channel.Name));
 
                         if (matchingItem != null && matchingItem.LiveStatus == "Live")
                         {
-                            // Extract video ID and construct the video URL
                             string videoId = ExtractVideoId(matchingItem.Link);
                             string url = !string.IsNullOrEmpty(videoId)
                                 ? $"https://cdpn.io/pen/debug/oNPzxKo?v={videoId}&autoplay=0&mute=1"
                                 : "about:blank";
 
-                            // Update only if the video ID has changed
                             if (_currentStreamIds.TryGetValue(streamIndex, out string? currentVideoId) && currentVideoId == videoId)
                             {
                                 System.Diagnostics.Debug.WriteLine($"Stream {streamIndex} is still live with the same video ID. Skipping refresh.");
                                 continue;
                             }
 
-                            // Update the current stream and UI
                             _currentStreamIds[streamIndex] = videoId;
                             UpdateStreamUI(streamIndex, url, true);
                         }
                         else
                         {
-                            // No matching live stream found, clear the UI for this channel
                             _currentStreamIds[streamIndex] = null;
                             UpdateStreamUI(streamIndex, "about:blank", false);
                         }
@@ -412,7 +395,7 @@ namespace HoloStreamProject
 
                     if (_currentStreamIds.TryGetValue(i, out string? currentVideoId) && currentVideoId == videoId)
                     {
-                        Console.WriteLine($"Stream {i + 1} is still live with the same video ID. Skipping refresh.");
+                        System.Diagnostics.Debug.WriteLine($"Stream {i + 1} is still live with the same video ID. Skipping refresh.");
                         continue;
                     }
 
